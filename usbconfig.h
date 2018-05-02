@@ -76,18 +76,18 @@ section at the end of this file).
 
 /* --------------------------- Functional Range ---------------------------- */
 
-#define USB_CFG_HAVE_INTRIN_ENDPOINT    0
+#define USB_CFG_HAVE_INTRIN_ENDPOINT    1
 /* Define this to 1 if you want to compile a version with two endpoints: The
  * default control endpoint 0 and an interrupt-in endpoint (any other endpoint
  * number).
  */
-#define USB_CFG_HAVE_INTRIN_ENDPOINT3   0
+#define USB_CFG_HAVE_INTRIN_ENDPOINT3   1
 /* Define this to 1 if you want to compile a version with three endpoints: The
  * default control endpoint 0, an interrupt-in endpoint 3 (or the number
  * configured below) and a catch-all default interrupt-in endpoint as above.
  * You must also define USB_CFG_HAVE_INTRIN_ENDPOINT to 1 for this feature.
  */
-#define USB_CFG_EP3_NUMBER              3
+#define USB_CFG_EP3_NUMBER              2
 /* If the so-called endpoint 3 is used, it can now be configured to any other
  * endpoint number (except 0) with this macro. Default if undefined is 3.
  */
@@ -111,7 +111,7 @@ section at the end of this file).
  * (e.g. HID), but never want to send any data. This option saves a couple
  * of bytes in flash memory and the transmit buffers in RAM.
  */
-#define USB_CFG_INTR_POLL_INTERVAL      10
+#define USB_CFG_INTR_POLL_INTERVAL      20
 /* If you compile a version with endpoint 1 (interrupt-in), this is the poll
  * interval. The value is in milliseconds and must not be less than 10 ms for
  * low speed devices.
@@ -125,7 +125,7 @@ section at the end of this file).
  * The value is in milliamperes. [It will be divided by two since USB
  * communicates power requirements in units of 2 mA.]
  */
-#define USB_CFG_IMPLEMENT_FN_WRITE      0
+#define USB_CFG_IMPLEMENT_FN_WRITE      1
 /* Set this to 1 if you want usbFunctionWrite() to be called for control-out
  * transfers. Set it to 0 if you don't need it and want to save a couple of
  * bytes.
@@ -209,7 +209,7 @@ section at the end of this file).
 /* define this macro to 1 if you want the function usbMeasureFrameLength()
  * compiled in. This function can be used to calibrate the AVR's RC oscillator.
  */
-#define USB_USE_FAST_CRC                0
+#define USB_USE_FAST_CRC                1
 /* The assembler module has two implementations for the CRC algorithm. One is
  * faster, the other is smaller. This CRC routine is only used for transmitted
  * messages where timing is not critical. The faster routine needs 31 cycles
@@ -220,7 +220,7 @@ section at the end of this file).
 
 /* -------------------------- Device Description --------------------------- */
 
-#define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */
+#define  USB_CFG_VENDOR_ID       0x45, 0x0c
 /* USB vendor ID for the device, low byte first. If you have registered your
  * own Vendor ID, define it here. Otherwise you may use one of obdev's free
  * shared VID/PID pairs. Be sure to read USB-IDs-for-free.txt for rules!
@@ -229,7 +229,7 @@ section at the end of this file).
  * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
  * the implications!
  */
-#define  USB_CFG_DEVICE_ID       0xdc, 0x05 /* = 0x05dc = 1500 */
+#define  USB_CFG_DEVICE_ID       0x01, 0x74
 /* This is the ID of the product, low byte first. It is interpreted in the
  * scope of the vendor ID. If you have registered your own VID with usb.org
  * or if you have licensed a PID from somebody else, define it here. Otherwise
@@ -243,7 +243,7 @@ section at the end of this file).
 #define USB_CFG_DEVICE_VERSION  0x00, 0x01
 /* Version number of the device: Minor number first, then major number.
  */
-#define USB_CFG_VENDOR_NAME     'o', 'b', 'd', 'e', 'v', '.', 'a', 't'
+#define USB_CFG_VENDOR_NAME     'e', 'a', 'r', 't', 'h', '.', 'l', 'i'
 #define USB_CFG_VENDOR_NAME_LEN 8
 /* These two values define the vendor name returned by the USB device. The name
  * must be given as a list of characters under single quotes. The characters
@@ -253,8 +253,8 @@ section at the end of this file).
  * obdev's free shared VID/PID pair. See the file USB-IDs-for-free.txt for
  * details.
  */
-#define USB_CFG_DEVICE_NAME     'T', 'e', 'm', 'p', 'l', 'a', 't', 'e'
-#define USB_CFG_DEVICE_NAME_LEN 8
+#define USB_CFG_DEVICE_NAME     'T', 'E', 'M', 'P', 'e', 'r', 'V', '1', '.', '2'
+#define USB_CFG_DEVICE_NAME_LEN 10
 /* Same as above for the device name. If you don't want a device name, undefine
  * the macros. See the file USB-IDs-for-free.txt before you assign a name if
  * you use a shared VID/PID.
@@ -268,12 +268,12 @@ section at the end of this file).
  * to fine tune control over USB descriptors such as the string descriptor
  * for the serial number.
  */
-#define USB_CFG_DEVICE_CLASS        0xff    /* set to 0 if deferred to interface */
+#define USB_CFG_DEVICE_CLASS        0
 #define USB_CFG_DEVICE_SUBCLASS     0
 /* See USB specification if you want to conform to an existing device class.
  * Class 0xff is "vendor specific".
  */
-#define USB_CFG_INTERFACE_CLASS     0   /* define class here if not at device level */
+#define USB_CFG_INTERFACE_CLASS     0 /* At device level */
 #define USB_CFG_INTERFACE_SUBCLASS  0
 #define USB_CFG_INTERFACE_PROTOCOL  0
 /* See USB specification if you want to conform to an existing device class or
@@ -346,18 +346,16 @@ section at the end of this file).
  * };
  */
 
-#define CONFIG_DESCRIPTOR_SIZE 41
-
 #define USB_CFG_DESCR_PROPS_DEVICE                  0
-#define USB_CFG_DESCR_PROPS_CONFIGURATION           0
+#define USB_CFG_DESCR_PROPS_CONFIGURATION           (9 + 2 * (9 + 9 + 7))
 #define USB_CFG_DESCR_PROPS_STRINGS                 0
 #define USB_CFG_DESCR_PROPS_STRING_0                0
 #define USB_CFG_DESCR_PROPS_STRING_VENDOR           0
 #define USB_CFG_DESCR_PROPS_STRING_PRODUCT          0
-#define USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER    0
+#define USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER    (USB_PROP_IS_DYNAMIC | USB_PROP_IS_RAM)
 #define USB_CFG_DESCR_PROPS_HID                     0
 #define USB_CFG_DESCR_PROPS_HID_REPORT              0
-#define USB_CFG_DESCR_PROPS_UNKNOWN                 0
+#define USB_CFG_DESCR_PROPS_UNKNOWN                 0xFFFF
 
 
 //#define usbMsgPtr_t unsigned short
