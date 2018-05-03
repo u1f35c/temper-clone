@@ -5,7 +5,7 @@ CFLAGS = -Iusbdrv -Ilibs-device -I.
 AVRCC = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
 OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o \
-	libs-device/osccalASM.o main.o
+	libs-device/osccalASM.o main.o w1.o
 
 all: main.hex
 

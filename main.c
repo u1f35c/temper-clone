@@ -30,6 +30,8 @@
 #include "usbdrv.h"
 #include "libs-device/osccal.h"
 
+#include "w1.h"
+
 typedef struct {
 	uint8_t modifier;
 	uint8_t reserved;
@@ -190,6 +192,30 @@ PROGMEM const char usbDescriptorConfiguration[] = {
 	USB_CFG_INTR_POLL_INTERVAL,	/* in ms */
 };
 
+inline char hexdigit(unsigned int i)
+{
+	return (i < 10) ? ('0' + i) : ('A' - 10 + i);
+}
+
+/* Look for a 1-Wire device and use its ROMID to set the serial ID */
+void set_serial(void)
+{
+	uint8_t buf[8];
+	uint8_t i;
+
+	if (!w1_reset()) {
+		return;
+	}
+
+	w1_write(0x33);		/* READ ROM */
+	w1_read(buf, 8);
+
+	for (i = 0; i < 8; i++) {
+		serno_str[i * 2 + 1] = hexdigit(buf[i] >> 4);
+		serno_str[i * 2 + 2] = hexdigit(buf[i] & 0xF);
+	}
+}
+
 usbMsgLen_t usbFunctionDescriptor(usbRequest_t *rq)
 {
 	if (rq->wValue.bytes[1] == USBDESCR_STRING &&
@@ -307,6 +333,9 @@ int main(void)
 	unsigned char i;
 
 	wdt_enable(WDTO_1S);
+
+	w1_setup();
+	set_serial();
 
 	usbInit();
 	usbDeviceDisconnect();
