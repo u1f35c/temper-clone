@@ -39,6 +39,8 @@ typedef struct {
 } keyboard_report_t;
 keyboard_report_t keyboard_report;
 
+uint8_t temp_state = 0;
+
 uint8_t temp_report[8];
 bool have_temp_int = false;
 
@@ -216,6 +218,36 @@ void set_serial(void)
 	}
 }
 
+uint16_t read_temp(void)
+{
+	uint8_t buf[9];
+
+	cli();
+	if (!w1_reset()) {
+		return 0xFFFF;
+		sei();
+	}
+
+	w1_write(0xCC);		/* SKIP ROM */
+	w1_write(0x44);		/* Convert T */
+
+	do {
+		w1_read(buf, 1);
+	} while (buf[0] != 0xFF);
+
+	if (!w1_reset()) {
+		return 0xFFFF;
+		sei();
+	}
+
+	w1_write(0xCC);		/* SKIP ROM */
+	w1_write(0xBE);		/* Read Scratchpad */
+	w1_read(buf, 9);
+	sei();
+
+	return buf[2] << 8 | buf[1];
+}
+
 usbMsgLen_t usbFunctionDescriptor(usbRequest_t *rq)
 {
 	if (rq->wValue.bytes[1] == USBDESCR_STRING &&
@@ -282,6 +314,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
 usbMsgLen_t usbFunctionWrite(uint8_t * data, uchar len)
 {
 	if (len == 1) {
+		PORTB |= 1 << PB1; // LED on
 		if (data[0] != ledstate) {
 			ledstate = data[0];
 
@@ -301,13 +334,10 @@ usbMsgLen_t usbFunctionWrite(uint8_t * data, uchar len)
 
 		if (data[1] == 0x80 && data[2] == 0x33 && data[3] == 1) {
 			/* Temperature query */
-			have_temp_int = true;
+			memset(temp_report, 0, 8);
+			temp_state = 1;
 			temp_report[0] = 0x80;
 			temp_report[1] = 2;
-			/* Fake 15°C */
-			temp_report[2] = 0xF;
-			temp_report[3] = 0x0;
-
 		} else if (data[1] == 0x82 && data[2] == 0x77 &&
 				data[3] == 1) {
 			/* Initialisation Query #1 */
@@ -331,6 +361,7 @@ usbMsgLen_t usbFunctionWrite(uint8_t * data, uchar len)
 int main(void)
 {
 	unsigned char i;
+	uint8_t buf[9];
 
 	wdt_enable(WDTO_1S);
 
@@ -370,6 +401,49 @@ int main(void)
 			} else {
 				have_temp_int = false;
 			}
+		}
+
+		if (temp_state == 1) {
+			if (w1_reset()) {
+				temp_state = 2;
+			} else {
+				temp_report[2] = 0xFF;
+				temp_report[3] = 0xFF;
+				have_temp_int = true;
+				temp_state = 0;
+			}
+		} else if (temp_state == 2) {
+			w1_write(0xCC);		/* SKIP ROM */
+			temp_state = 3;
+		} else if (temp_state == 3) {
+			w1_write(0x44);		/* Convert T */
+			temp_state = 4;
+		} else if (temp_state == 4) {
+			if (w1_read_byte() == 0xFF)
+				temp_state = 5;
+		} else if (temp_state == 5) {
+			if (w1_reset()) {
+				temp_state = 6;
+			} else {
+				temp_report[2] = 0xFF;
+				temp_report[3] = 0xFE;
+				have_temp_int = true;
+				temp_state = 0;
+			}
+		} else if (temp_state == 6) {
+			w1_write(0xCC);		/* SKIP ROM */
+			temp_state = 7;
+		} else if (temp_state == 7) {
+			w1_write(0xBE);		/* Read Scratchpad */
+			temp_state = 8;
+		} else if (temp_state > 7 && temp_state < 17) {
+			buf[temp_state - 8] = w1_read_byte();
+			temp_state++;
+		} else if (temp_state == 17) {
+			temp_report[2] = buf[1] << 4 | buf[0] >> 4;
+			temp_report[3] = buf[0] << 4;
+			have_temp_int = true;
+			temp_state = 0;
 		}
 	}
 }
