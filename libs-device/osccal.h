@@ -43,7 +43,8 @@ deviation! All other frequency modules require at least 0.2% precision.
 
 #ifndef __ASSEMBLER__
 void    calibrateOscillatorASM(void);
-#define USB_RESET_HOOK(resetStarts)  if(!resetStarts){ calibrateOscillatorASM();}
+void    hadUsbReset(void);
+#define USB_RESET_HOOK(resetStarts)  if(!resetStarts){ calibrateOscillatorASM(); hadUsbReset();}
 #endif
 /* This function calibrates the RC oscillator so that the CPU runs at F_CPU.
  * It MUST be called immediately after the end of a USB RESET condition!

@@ -358,6 +358,13 @@ usbMsgLen_t usbFunctionWrite(uint8_t * data, uchar len)
 	return 0;
 }
 
+void hadUsbReset(void)
+{
+	/* Reset our state machine back to having nothing to send */
+	temp_state = 0;
+	have_temp_int = false;
+}
+
 int main(void)
 {
 	unsigned char i;
