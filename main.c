@@ -426,7 +426,7 @@ int main(void)
 			w1_write(0x44);		/* Convert T */
 			temp_state = 4;
 		} else if (temp_state == 4) {
-			if (w1_read_byte() == 0xFF)
+			if (w1_read_bit())
 				temp_state = 5;
 		} else if (temp_state == 5) {
 			if (w1_reset()) {

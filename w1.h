@@ -5,6 +5,7 @@
 
 uint8_t w1_crc(uint8_t *buf, uint8_t len);
 void w1_write(uint8_t val);
+bool w1_read_bit();
 uint8_t w1_read_byte();
 void w1_read(uint8_t *buf, uint8_t len);
 bool w1_reset(void);

@@ -65,26 +65,35 @@ void w1_write(uint8_t val)
 	}
 }
 
+bool w1_read_bit()
+{
+	bool val;
+
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		/* Pull low for 6µs */
+		DDRB |= 1 << W1_PIN;
+		_delay_us(6);
+		/* Release for 9µs */
+		DDRB &= ~(1 << W1_PIN);
+		_delay_us(9);
+
+		/* Read the line state */
+		val = ((PINB >> W1_PIN) & 1);
+	}
+	_delay_us(55);
+
+	return val;
+}
+
 uint8_t w1_read_byte()
 {
 	uint8_t i, val;
 
 	val = 0;
 	for (i = 0; i < 8; i++) {
-		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-		{
-			/* Pull low for 6µs */
-			DDRB |= 1 << W1_PIN;
-			_delay_us(6);
-			/* Release for 9µs */
-			DDRB &= ~(1 << W1_PIN);
-			_delay_us(9);
-
-			/* Read the line state */
-			val |= ((PINB >> W1_PIN) & 1) << i;
-		}
-
-		_delay_us(55);
+		if (w1_read_bit())
+			val |= (1 << i);
 	}
 
 	return val;
