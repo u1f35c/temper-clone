@@ -30,6 +30,7 @@
 #include "usbdrv.h"
 #include "libs-device/osccal.h"
 
+#include "timer.h"
 #include "w1.h"
 
 typedef struct {
@@ -40,6 +41,8 @@ typedef struct {
 keyboard_report_t keyboard_report;
 
 uint8_t temp_state = 0;
+uint16_t last_temp = 0xFFFD;
+#define TEMP_INTERVAL (10 * 1000)
 
 uint8_t temp_report[8];
 bool have_temp_int = false;
@@ -335,9 +338,11 @@ usbMsgLen_t usbFunctionWrite(uint8_t * data, uchar len)
 		if (data[1] == 0x80 && data[2] == 0x33 && data[3] == 1) {
 			/* Temperature query */
 			memset(temp_report, 0, 8);
-			temp_state = 1;
+			have_temp_int = true;
 			temp_report[0] = 0x80;
 			temp_report[1] = 2;
+			temp_report[2] = last_temp >> 8;
+			temp_report[3] = last_temp & 0xFF;
 		} else if (data[1] == 0x82 && data[2] == 0x77 &&
 				data[3] == 1) {
 			/* Initialisation Query #1 */
@@ -369,11 +374,13 @@ int main(void)
 {
 	unsigned char i;
 	uint8_t buf[9];
+	unsigned long last_temp_time = 0;
 
 	wdt_enable(WDTO_1S);
 
 	w1_setup();
 	set_serial();
+	timer_init();
 
 	usbDeviceDisconnect();
 	i = 0;
@@ -413,9 +420,6 @@ int main(void)
 			if (w1_reset()) {
 				temp_state = 2;
 			} else {
-				temp_report[2] = 0xFF;
-				temp_report[3] = 0xFF;
-				have_temp_int = true;
 				temp_state = 0;
 			}
 		} else if (temp_state == 2) {
@@ -431,9 +435,6 @@ int main(void)
 			if (w1_reset()) {
 				temp_state = 6;
 			} else {
-				temp_report[2] = 0xFF;
-				temp_report[3] = 0xFE;
-				have_temp_int = true;
 				temp_state = 0;
 			}
 		} else if (temp_state == 6) {
@@ -446,10 +447,14 @@ int main(void)
 			buf[temp_state - 8] = w1_read_byte();
 			temp_state++;
 		} else if (temp_state == 17) {
-			temp_report[2] = buf[1] << 4 | buf[0] >> 4;
-			temp_report[3] = buf[0] << 4;
-			have_temp_int = true;
+			last_temp = buf[1] << 12 | buf[0] << 4;
 			temp_state = 0;
+			last_temp_time = millis();
+		}
+
+		if (temp_state == 0 &&
+				(millis() - last_temp_time) > TEMP_INTERVAL) {
+			temp_state = 1;
 		}
 	}
 }
