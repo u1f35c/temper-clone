@@ -418,31 +418,31 @@ int main(void)
 
 		if (temp_state == 1) {
 			if (w1_reset()) {
-				temp_state = 2;
+				temp_state++;
 			} else {
 				temp_state = 0;
 			}
 		} else if (temp_state == 2) {
 			w1_write(0xCC);		/* SKIP ROM */
-			temp_state = 3;
+			temp_state++;
 		} else if (temp_state == 3) {
 			w1_write(0x44);		/* Convert T */
-			temp_state = 4;
+			temp_state++;
 		} else if (temp_state == 4) {
 			if (w1_read_bit())
-				temp_state = 5;
+				temp_state++;
 		} else if (temp_state == 5) {
 			if (w1_reset()) {
-				temp_state = 6;
+				temp_state++;
 			} else {
 				temp_state = 0;
 			}
 		} else if (temp_state == 6) {
 			w1_write(0xCC);		/* SKIP ROM */
-			temp_state = 7;
+			temp_state++;
 		} else if (temp_state == 7) {
 			w1_write(0xBE);		/* Read Scratchpad */
-			temp_state = 8;
+			temp_state++;
 		} else if (temp_state > 7 && temp_state < 17) {
 			buf[temp_state - 8] = w1_read_byte();
 			temp_state++;
