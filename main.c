@@ -221,36 +221,6 @@ void set_serial(void)
 	}
 }
 
-uint16_t read_temp(void)
-{
-	uint8_t buf[9];
-
-	cli();
-	if (!w1_reset()) {
-		return 0xFFFF;
-		sei();
-	}
-
-	w1_write(0xCC);		/* SKIP ROM */
-	w1_write(0x44);		/* Convert T */
-
-	do {
-		w1_read(buf, 1);
-	} while (buf[0] != 0xFF);
-
-	if (!w1_reset()) {
-		return 0xFFFF;
-		sei();
-	}
-
-	w1_write(0xCC);		/* SKIP ROM */
-	w1_write(0xBE);		/* Read Scratchpad */
-	w1_read(buf, 9);
-	sei();
-
-	return buf[2] << 8 | buf[1];
-}
-
 usbMsgLen_t usbFunctionDescriptor(usbRequest_t *rq)
 {
 	if (rq->wValue.bytes[1] == USBDESCR_STRING &&
